@@ -1,0 +1,106 @@
+### Register a new user
+POST http://localhost:3000/auth/register
+Content-Type: application/json
+
+{
+    "email": "user@example.com",
+    "password": "123456",
+    "name": "John Doe"
+}
+
+### Login with credentials
+POST http://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+    "email": "user@example.com",
+    "password": "123456"
+}
+
+### Get protected profile (Replace YOUR_ACCESS_TOKEN with actual token)
+POST http://localhost:3000/auth/profile
+Authorization: Bearer YOUR_ACCESS_TOKEN
+Content-Type: application/json
+
+### Refresh token (Replace YOUR_REFRESH_TOKEN with actual refresh token)
+POST http://localhost:3000/auth/refresh
+Content-Type: application/json
+
+{
+    "refreshToken": "YOUR_REFRESH_TOKEN"
+}
+
+### Logout (Replace YOUR_ACCESS_TOKEN with actual token)
+POST http://localhost:3000/auth/logout
+Authorization: Bearer YOUR_ACCESS_TOKEN
+Content-Type: application/json
+
+### Error Scenarios ###
+
+### 1. Register with invalid email
+POST http://localhost:3000/auth/register
+Content-Type: application/json
+
+{
+    "email": "invalid-email",
+    "password": "123456",
+    "name": "Test"
+}
+
+### 2. Login with wrong password
+POST http://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+    "email": "user@example.com",
+    "password": "wrongpassword"
+}
+
+### 3. Access protected endpoint without token
+POST http://localhost:3000/auth/profile
+Content-Type: application/json
+
+### Using Environment Variables ###
+@baseUrl = http://localhost:3000
+@email = test@test.com
+@password = test123
+@name = Test User
+@accessToken = YOUR_ACCESS_TOKEN
+@refreshToken = YOUR_REFRESH_TOKEN
+
+### Register with variables
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+    "email": "{{email}}",
+    "password": "{{password}}",
+    "name": "{{name}}"
+}
+
+### Login with variables
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+    "email": "{{email}}",
+    "password": "{{password}}"
+}
+
+### Profile with variable token
+POST {{baseUrl}}/auth/profile
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+### Refresh with variable token
+POST {{baseUrl}}/auth/refresh
+Content-Type: application/json
+
+{
+    "refreshToken": "{{refreshToken}}"
+}
+
+### Logout with variable token
+POST {{baseUrl}}/auth/logout
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
