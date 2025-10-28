@@ -1,8 +1,8 @@
 import { Injectable, UnauthorizedException } from "@nestjs/common";
-import { PassportStrategy } from "@nestjs/passport";
-import { ExtractJwt, Strategy } from "passport-jwt";
 import { ConfigService } from "@nestjs/config";
+import { PassportStrategy } from "@nestjs/passport";
 import { Request } from "express";
+import { ExtractJwt, Strategy } from "passport-jwt";
 
 import { UsersService } from "src/users/users.service";
 import { JwtPayload } from "./jwt.strategy";
@@ -23,7 +23,7 @@ export class JwtRefreshStrategy extends PassportStrategy(Strategy, "jwt-refresh"
 
   async validate(request: Request, payload: JwtPayload) {
     const refreshToken = request.body.refreshToken;
-    if (refreshToken) {
+    if (!refreshToken) {
       throw new UnauthorizedException("Refresh token not found");
     }
 

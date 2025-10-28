@@ -32,10 +32,12 @@ async function bootstrap() {
     }),
   );
 
-  await app.listen(process.env.PORT ?? 3000, () => {
-    console.log(
-      `Application is running on: http://${process.env.HOST ?? "localhost"}:${process.env.PORT ?? 3000}`,
-    );
+  const PORT = process.env.PORT || 3000;
+  const HOST = process.env.HOST || "localhost";
+
+  await app.listen(PORT, () => {
+    console.log(`Application is running on: http://${HOST}:${PORT}`);
+    console.log(`API reference is available on: http://${HOST}:${PORT}/reference`);
   });
 }
 bootstrap();

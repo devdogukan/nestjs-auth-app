@@ -3,10 +3,10 @@ import { ConfigService } from "@nestjs/config";
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcrypt";
 
-import { UsersService } from "src/users/users.service";
-import { RegisterDto } from "./dto/register.dto";
 import { User } from "src/users/entities/user.entity";
+import { UsersService } from "src/users/users.service";
 import { LoginDto } from "./dto/login.dto";
+import { RegisterDto } from "./dto/register.dto";
 
 export interface AuthResponse {
   accessToken: string;
