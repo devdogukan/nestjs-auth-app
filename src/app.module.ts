@@ -1,11 +1,12 @@
 import { Module, ValidationPipe } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
-import { APP_PIPE } from "@nestjs/core";
+import { APP_GUARD, APP_PIPE } from "@nestjs/core";
 import { AuthModule } from "./auth/auth.module";
 import { UsersModule } from "./users/users.module";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { User } from "./users/entities/user.entity";
-import { EmailModule } from './email/email.module';
+import { EmailModule } from "./email/email.module";
+import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
 
 @Module({
   imports: [
@@ -24,9 +25,20 @@ import { EmailModule } from './email/email.module';
         password: configService.getOrThrow<string>("DATABASE_PASSWORD"),
         database: configService.getOrThrow<string>("DATABASE_NAME"),
         entities: [User],
-        synchronize: configService.getOrThrow<string>("NODE_ENV") === 'development',
-        logging: configService.getOrThrow<string>("DATABASE_LOGGING") === 'true',
+        synchronize: configService.getOrThrow<string>("NODE_ENV") === "development",
+        logging: configService.getOrThrow<string>("DATABASE_LOGGING") === "true",
       }),
+    }),
+    ThrottlerModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => [
+        {
+          name: "default",
+          ttl: Number(configService.getOrThrow<string>("THROTTLER_TTL")) * 1000, // Convert seconds to milliseconds
+          limit: Number(configService.getOrThrow<string>("THROTTLER_LIMIT")),
+        },
+      ],
     }),
     AuthModule,
     UsersModule,
@@ -36,6 +48,10 @@ import { EmailModule } from './email/email.module';
     {
       provide: APP_PIPE,
       useClass: ValidationPipe,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
     },
   ],
 })

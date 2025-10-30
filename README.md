@@ -43,13 +43,12 @@
 - ✅ **Multiple role support** - A user can have multiple roles
 
 ### ⚡ Rate Limiting
-- ✅ **Global Rate Limiting** - For all endpoints
-- ✅ **Custom Rate Limits** - Endpoint-specific limits
-- ✅ **Centralized Management** - Control from Constants file
+- ✅ **Global Rate Limiting** - For all endpoints (via ThrottlerModule)
+- ✅ **Configurable Limits** - TTL and limit settings via .env
+- ✅ **ThrottlerGuard** - Global rate limiting protection
 - ✅ **Custom Decorators:**
-  - `@ApiThrottle('REGISTER')` - Predefined limits
-  - `@SkipThrottle()` - Skip rate limiting
-  - `@CustomThrottle({ limit: 5, ttl: 60 })` - Custom limits
+  - `@SkipThrottle()` - Skip rate limiting (from @nestjs/throttler)
+  - `@Throttle()` - Custom rate limits per endpoint
 
 ### 🛡️ Security Features
 - ✅ **Password Hashing** - Bcrypt (10 rounds)
@@ -70,8 +69,7 @@
 - ✅ `@CurrentUser()` - Active user information
 - ✅ `@Roles(Role.ADMIN)` - Role checking
 - ✅ `@Public()` - Public endpoint
-- ✅ `@SkipThrottle()` - Skip rate limit
-- ✅ `@ApiThrottle('LOGIN')` - Centralized rate limit
+- ✅ `@SkipThrottle()` - Skip rate limit (from @nestjs/throttler)
 
 ### 👤 User Management
 - ✅ **Get All Users** - List all users (ADMIN)
@@ -91,52 +89,51 @@ src/
 │   ├── decorators/
 │   │   ├── current-user.decorator.ts    # @CurrentUser() decorator
 │   │   ├── public.decorator.ts          # @Public() decorator
-│   │   ├── roles.decorator.ts           # @Roles() decorator
-│   │   └── skip-throttle.decorator.ts   # @SkipThrottle() decorator
+│   │   └── roles.decorator.ts           # @Roles() decorator
 │   ├── dto/
-│   │   ├── login.dto.ts
-│   │   ├── register.dto.ts
-│   │   ├── refresh-token.dto.ts
-│   │   ├── verify-email.dto.ts
-│   │   ├── forgot-password.dto.ts
-│   │   ├── reset-password.dto.ts
-│   │   └── resend-verification.dto.ts
+│   │   ├── forgot-password.dto.ts       # Forgot password DTO
+│   │   ├── login.dto.ts                 # Login DTO
+│   │   ├── refresh-token.dto.ts         # Refresh token DTO
+│   │   ├── register.dto.ts              # Register DTO
+│   │   ├── resend-vertification.dto.ts  # Resend verification DTO
+│   │   ├── reset-password.dto.ts        # Reset password DTO
+│   │   ├── update-roles.dto.ts          # Update roles DTO
+│   │   └── verify-email.dto.ts          # Verify email DTO
 │   ├── enums/
-│   │   └── role.enum.ts                 # Rol tanımları
+│   │   └── role.enum.ts                 # Role definitions
 │   ├── guards/
-│   │   ├── jwt-auth.guard.ts            # JWT authentication
-│   │   ├── jwt-refresh.guard.ts         # Refresh token guard
-│   │   ├── roles.guard.ts               # Role-based guard
-│   │   └── custom-throttler.guard.ts    # Custom rate limiting
+│   │   ├── jwt-auth.guard.ts            # JWT authentication guard
+│   │   ├── jwt-refresh.guard.ts         # JWT refresh token guard
+│   │   └── roles.guard.ts               # Role-based authorization guard
 │   ├── strategies/
-│   │   ├── jwt.strategy.ts              # JWT strategy
-│   │   └── jwt-refresh.strategy.ts      # Refresh strategy
+│   │   ├── jwt.strategy.ts              # JWT authentication strategy
+│   │   └── jwt-refresh.strategy.ts      # JWT refresh strategy
+│   ├── auth.controller.spec.ts          # Auth controller tests
 │   ├── auth.controller.ts               # Auth endpoints
+│   ├── auth.service.spec.ts             # Auth service tests
 │   ├── auth.service.ts                  # Auth business logic
-│   └── auth.module.ts
+│   └── auth.module.ts                   # Auth module
 │
 ├── users/
-│   ├── dto/
-│   │   └── update-roles.dto.ts
 │   ├── entities/
 │   │   └── user.entity.ts               # User database entity
+│   ├── users.controller.spec.ts         # Users controller tests
 │   ├── users.controller.ts              # User management endpoints
+│   ├── users.service.spec.ts            # Users service tests
 │   ├── users.service.ts                 # User CRUD operations
-│   └── users.module.ts
+│   └── users.module.ts                  # Users module
 │
 ├── email/
+│   ├── email.service.spec.ts            # Email service tests
 │   ├── email.service.ts                 # Email sending service
-│   └── email.module.ts
+│   └── email.module.ts                  # Email module
 │
-├── common/
-│   ├── constants/
-│   │   └── rate-limit.constants.ts      # Rate limit configuration
-│   └── decorators/
-│       └── api-throttle.decorator.ts    # Custom throttle decorator
-│
-├── app.module.ts                         # main module
-└── main.ts                               # Bootstrap
+├── app.module.ts                         # Main application module
+└── main.ts                               # Application bootstrap
 
+test/
+├── app.e2e-spec.ts                       # E2E tests
+└── jest-e2e.json                         # Jest E2E configuration
 ```
 
 ---
@@ -170,9 +167,9 @@ APP_NAME=NestJS Auth App
 FRONTEND_URL=http://localhost:3001
 PORT=3000
 
-# Rate Limiting (AppModule'den okunuyor)
-THROTTLE_TTL=60
-THROTTLE_LIMIT=10
+# Rate Limiting (Global - applies to all endpoints)
+THROTTLER_TTL=60        # Time window in seconds
+THROTTLER_LIMIT=10      # Maximum requests per time window
 ```
 
 ---
@@ -180,17 +177,17 @@ THROTTLE_LIMIT=10
 ## 🎯 API Endpoints
 
 ### Authentication
-| Method | Endpoint | Auth | Rate Limit | Description |
-|--------|----------|------|------------|-------------|
-| POST | `/auth/register` | ❌ | 3/5min | User registration |
-| POST | `/auth/verify-email` | ❌ | Default | Email verification |
-| POST | `/auth/resend-verification` | ❌ | 2/10min | Resend verification email |
-| POST | `/auth/login` | ❌ | 5/5min | Login |
-| POST | `/auth/forgot-password` | ❌ | 3/15min | Forgot password |
-| POST | `/auth/reset-password` | ❌ | Default | Reset password |
-| POST | `/auth/refresh` | 🔄 Refresh | Default | Refresh token |
-| POST | `/auth/logout` | ✅ JWT | Default | Logout |
-| POST | `/auth/profile` | ✅ JWT | Default | My profile |
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| POST | `/auth/register` | ❌ | User registration |
+| POST | `/auth/verify-email` | ❌ | Email verification |
+| POST | `/auth/resend-verification` | ❌ | Resend verification email |
+| POST | `/auth/login` | ❌ | Login |
+| POST | `/auth/forgot-password` | ❌ | Forgot password |
+| POST | `/auth/reset-password` | ❌ | Reset password |
+| POST | `/auth/refresh` | 🔄 Refresh | Refresh token |
+| POST | `/auth/logout` | ✅ JWT | Logout |
+| GET | `/auth/profile` | ✅ JWT | My profile |
 
 ### User Management
 | Method | Endpoint | Auth | Role | Description |
@@ -207,22 +204,45 @@ THROTTLE_LIMIT=10
 
 ## 📊 Rate Limit Configuration
 
+Rate limiting is configured globally in `app.module.ts` using `@nestjs/throttler`:
+
 ```typescript
-// src/common/constants/rate-limit.constants.ts
-export const RATE_LIMIT = {
-  REGISTER: { ttl: 300, limit: 3 },          // 3 registrations per 5 minutes
-  LOGIN: { ttl: 300, limit: 5 },             // 5 logins per 5 minutes
-  FORGOT_PASSWORD: { ttl: 900, limit: 3 },   // 3 requests per 15 minutes
-  RESEND_VERIFICATION: { ttl: 600, limit: 2 },// 2 requests per 10 minutes
-  DEFAULT: { ttl: 60, limit: 10 },           // 10 requests per minute
-  ADMIN: { ttl: 60, limit: 30 },             // Higher limit for admin
-}
+// app.module.ts - ThrottlerModule Configuration
+ThrottlerModule.forRootAsync({
+  imports: [ConfigModule],
+  inject: [ConfigService],
+  useFactory: (configService: ConfigService) => [
+    {
+      name: "default",
+      ttl: Number(configService.getOrThrow<string>("THROTTLER_TTL")) * 1000, // milliseconds
+      limit: Number(configService.getOrThrow<string>("THROTTLER_LIMIT")),
+    },
+  ],
+}),
 ```
 
-**Usage:**
+**Environment Variables:**
+```env
+THROTTLER_TTL=60        # Time window in seconds (converted to ms)
+THROTTLER_LIMIT=10      # Max requests per time window
+```
+
+**Usage Examples:**
+
 ```typescript
-@ApiThrottle('REGISTER')  // Use rate limit constant
-async register() { ... }
+// Skip throttling for specific endpoint
+import { SkipThrottle } from '@nestjs/throttler';
+
+@SkipThrottle()
+@Get('unlimited')
+async unlimitedEndpoint() { ... }
+
+// Custom throttle for specific endpoint
+import { Throttle } from '@nestjs/throttler';
+
+@Throttle({ default: { limit: 3, ttl: 60000 } }) // 3 requests per minute
+@Post('limited')
+async limitedEndpoint() { ... }
 ```
 
 ---
