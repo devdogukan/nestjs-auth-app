@@ -7,6 +7,7 @@ import { JwtModule } from "@nestjs/jwt";
 import { ConfigModule } from "@nestjs/config";
 import { JwtStrategy } from "./strategies/jwt.strategy";
 import { JwtRefreshStrategy } from "./strategies/jwt-refresh.strategy";
+import { EmailModule } from "src/email/email.module";
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { JwtRefreshStrategy } from "./strategies/jwt-refresh.strategy";
     PassportModule,
     JwtModule.register({}),
     ConfigModule,
+    EmailModule
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy, JwtRefreshStrategy],

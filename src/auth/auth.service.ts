@@ -1,12 +1,19 @@
-import { Injectable, UnauthorizedException } from "@nestjs/common";
+import { BadRequestException, Injectable, UnauthorizedException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcrypt";
+import * as crypto from "crypto";
 
+import { EmailService } from "src/email/email.service";
 import { User } from "src/users/entities/user.entity";
 import { UsersService } from "src/users/users.service";
+
 import { LoginDto } from "./dto/login.dto";
 import { RegisterDto } from "./dto/register.dto";
+import { VerifyEmailDto } from "./dto/verify-email.dto";
+import { ResendVerificationDto } from "./dto/resend-vertification.dto";
+import { ForgotPasswordDto } from "./dto/forgot-password.dto";
+import { ResetPasswordDto } from "./dto/reset-password.dto";
 
 export interface AuthResponse {
   accessToken: string;
@@ -15,26 +22,43 @@ export interface AuthResponse {
     id: string;
     email: string;
     name: string;
+    isEmailVerified: boolean;
   };
 }
 
 @Injectable()
 export class AuthService {
   constructor(
-    private usersService: UsersService,
-    private jwtService: JwtService,
-    private configService: ConfigService,
+    private readonly usersService: UsersService,
+    private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
+    private readonly emailService: EmailService,
   ) {}
 
-  async register(registerDto: RegisterDto): Promise<AuthResponse> {
+  async register(registerDto: RegisterDto): Promise<{ message: string; email: string }> {
     const user = await this.usersService.create(
       registerDto.email,
       registerDto.password,
       registerDto.name,
     );
 
-    const tokens = await this.generateTokens(user.id, user.email);
+    const verificationToken = crypto.randomBytes(32).toString("hex");
+    await this.usersService.updateEmailVerificationToken(user.id, verificationToken);
 
+    await this.emailService.sendVerificationEmail(user.email, verificationToken, user.name);
+
+    return {
+      message: "Registration successful. Please check your email to verify your account.",
+      email: user.email,
+    };
+  }
+
+  async verifyEmail(verifyEmailDto: VerifyEmailDto): Promise<AuthResponse> {
+    const user = await this.usersService.verifyEmail(verifyEmailDto.token);
+
+    await this.emailService.sendWelcomeEmail(user.email, user.name);
+
+    const tokens = await this.generateTokens(user.id, user.email);
     await this.usersService.updateRefreshToken(user.id, tokens.refreshToken);
 
     return {
@@ -43,13 +67,41 @@ export class AuthService {
         id: user.id,
         email: user.email,
         name: user.name,
+        isEmailVerified: user.isEmailVerified,
       },
     };
+  }
+
+  async resendVerificationToken(
+    resendVerificationDto: ResendVerificationDto,
+  ): Promise<{ message: string }> {
+    const user = await this.usersService.findByEmail(resendVerificationDto.email);
+
+    if (!user) {
+      return {
+        message: "If an account with that email exists, a verification email has been sent.",
+      };
+    }
+
+    if (user.isEmailVerified) {
+      throw new BadRequestException("The email account has already been verified.");
+    }
+
+    const verificationToken = crypto.randomBytes(32).toString("hex");
+    await this.usersService.updateEmailVerificationToken(user.id, verificationToken);
+
+    await this.emailService.sendVerificationEmail(user.email, verificationToken, user.name);
+
+    return { message: "The verification email has been resent." };
   }
 
   async login(loginDto: LoginDto): Promise<AuthResponse> {
     const user = await this.validateUser(loginDto.email, loginDto.password);
 
+    if (!user.isEmailVerified) {
+      throw new UnauthorizedException("Please verify your email before logging in.");
+    }
+
     const tokens = await this.generateTokens(user.id, user.email);
     await this.usersService.updateRefreshToken(user.id, tokens.refreshToken);
 
@@ -59,8 +111,30 @@ export class AuthService {
         id: user.id,
         email: user.email,
         name: user.name,
+        isEmailVerified: user.isEmailVerified,
       },
     };
+  }
+
+  async forgotPassword(forgotPassWordDto: ForgotPasswordDto): Promise<{ message: string }> {
+    const user = await this.usersService.findByEmail(forgotPassWordDto.email);
+    if (!user) {
+      return { message: "If an account with that email exists, a password reset email has been sent." };
+    }
+
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    const resetExpires = new Date(Date.now() + 3600000);
+
+    await this.usersService.updatePasswordResetToken(user.id, resetToken, resetExpires);
+
+    await this.emailService.sendPasswordResetEmail(user.email, resetToken, user.name);
+
+    return { message: "If an account with that email exists, a password reset email has been sent." };
+  }
+
+  async resetPassword(resetPasswordDto: ResetPasswordDto): Promise<{ message: string }> {
+    await this.usersService.resetPassword(resetPasswordDto.token, resetPasswordDto.newPassword);
+    return { message: "Password has been reset successfully." };
   }
 
   async refreshTokens(userId: string, refreshToken: string): Promise<AuthResponse> {
@@ -78,6 +152,7 @@ export class AuthService {
         id: user.id,
         email: user.email,
         name: user.name,
+        isEmailVerified: user.isEmailVerified,
       },
     };
   }

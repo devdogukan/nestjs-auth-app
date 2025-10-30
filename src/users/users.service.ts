@@ -81,15 +81,12 @@ export class UsersService {
     return this.usersRepository.save(user);
   }
 
-  async updatePasswordResetToken(email: string, token: string, expires: Date): Promise<void> {
-    const user = await this.findByEmail(email);
-    if (!user) {
-      throw new NotFoundException("User is not found");
-    }
-
-    user.passwordResetToken = token;
-    user.passwordResetExpires = expires;
-    await this.usersRepository.save(user);
+  async updatePasswordResetToken(userId: string, token: string, expires: Date): Promise<void> {
+    await this.usersRepository.update(
+      { id: userId },
+      { passwordResetToken: token, passwordResetExpires: expires },
+    );
+    return;
   }
 
   async resetPassword(token: string, newPassword: string): Promise<User> {
@@ -110,8 +107,8 @@ export class UsersService {
     return this.usersRepository.save(user);
   }
 
-  async findAll(): Promise<User[]> {
-    return this.usersRepository.find({
+  async findAll(): Promise<[User[], number]> {
+    return this.usersRepository.findAndCount({
       select: [
         "id",
         "email",
