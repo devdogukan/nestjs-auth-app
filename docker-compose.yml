@@ -17,6 +17,29 @@ services:
       timeout: 30s
       retries: 5
       start_period: 30s
+    networks:
+      - nestjs-network
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: nestjs-auth-app
+    restart: always
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env.production.local
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - nestjs-network
 
 volumes: 
   postgres_data:
+
+networks:
+  nestjs-network:
+    driver: bridge

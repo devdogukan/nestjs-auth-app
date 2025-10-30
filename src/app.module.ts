@@ -24,7 +24,7 @@ import { EmailModule } from './email/email.module';
         password: configService.getOrThrow<string>("DATABASE_PASSWORD"),
         database: configService.getOrThrow<string>("DATABASE_NAME"),
         entities: [User],
-        synchronize: configService.getOrThrow<string>("DATABASE_SYNC") === 'true',
+        synchronize: configService.getOrThrow<string>("NODE_ENV") === 'development',
         logging: configService.getOrThrow<string>("DATABASE_LOGGING") === 'true',
       }),
     }),
