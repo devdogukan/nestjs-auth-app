@@ -1,15 +1,15 @@
 import { Controller, Post, Body, HttpCode, HttpStatus, UseGuards, Request } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from "@nestjs/swagger";
 import { AuthService } from "./auth.service";
-import { RegisterDto } from "./dto/register.dto";
-import { LoginDto } from "./dto/login.dto";
+import { RegisterDto } from "./dto/request/register-request.dto";
+import { LoginDto } from "./dto/request/login-request.dto";
 import { JwtRefreshGuard } from "./guards/jwt-refresh.guard";
-import { RefreshTokenDto } from "./dto/refresh-token.dto";
+import { RefreshTokenDto } from "./dto/request/refresh-token-request.dto";
 import { JwtAuthGuard } from "./guards/jwt-auth.guard";
-import { VerifyEmailDto } from "./dto/verify-email.dto";
-import { ForgotPasswordDto } from "./dto/forgot-password.dto";
-import { ResetPasswordDto } from "./dto/reset-password.dto";
-import { ResendVerificationDto } from "./dto/resend-vertification.dto";
+import { VerifyEmailDto } from "./dto/request/verify-email-request.dto";
+import { ForgotPasswordDto } from "./dto/request/forgot-password-request.dto";
+import { ResetPasswordDto } from "./dto/request/reset-password-request.dto";
+import { ResendVerificationDto } from "./dto/request/resend-verification-request.dto";
 import { CurrentUser } from "./decorators/current-user.decorator";
 
 @ApiTags("auth")

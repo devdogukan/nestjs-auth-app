@@ -8,12 +8,12 @@ import { EmailService } from "src/email/email.service";
 import { User } from "src/users/entities/user.entity";
 import { UsersService } from "src/users/users.service";
 
-import { LoginDto } from "./dto/login.dto";
-import { RegisterDto } from "./dto/register.dto";
-import { VerifyEmailDto } from "./dto/verify-email.dto";
-import { ResendVerificationDto } from "./dto/resend-vertification.dto";
-import { ForgotPasswordDto } from "./dto/forgot-password.dto";
-import { ResetPasswordDto } from "./dto/reset-password.dto";
+import { LoginDto } from "./dto/request/login-request.dto";
+import { RegisterDto } from "./dto/request/register-request.dto";
+import { VerifyEmailDto } from "./dto/request/verify-email-request.dto";
+import { ResendVerificationDto } from "./dto/request/resend-verification-request.dto";
+import { ForgotPasswordDto } from "./dto/request/forgot-password-request.dto";
+import { ResetPasswordDto } from "./dto/request/reset-password-request.dto";
 
 export interface AuthResponse {
   accessToken: string;

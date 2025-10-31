@@ -81,7 +81,7 @@
 
 ---
 
-## 📁 Proje Yapısı
+## 📁 Project Structure
 
 ```
 src/

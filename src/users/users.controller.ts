@@ -16,7 +16,8 @@ import { Roles } from "src/auth/decorators/roles.decorator";
 import { Role } from "src/auth/enums/role.enum";
 import { ApiBearerAuth, ApiOperation, ApiProperty } from "@nestjs/swagger";
 import { CurrentUser } from "src/auth/decorators/current-user.decorator";
-import { UpdateRolesDto } from "src/auth/dto/update-roles.dto";
+import { UpdateRolesDto } from "src/auth/dto/request/update-roles-request.dto";
+import { ResponseHelper } from "src/common/helpers/response.helper";
 
 @Controller("users")
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -48,10 +49,7 @@ export class UsersController {
   @ApiProperty({ description: "Update user roles by ID (admin only)" })
   async updateUserRoles(@Param("id") id: string, @Body() updateRolesDto: UpdateRolesDto) {
     const updatedUser = await this.usersService.updateUserRoles(id, updateRolesDto.roles);
-    return {
-      message: "User roles updated successfully",
-      data: updatedUser,
-    };
+    return ResponseHelper.success("User roles updated successfully", updatedUser);
   }
 
   @Patch(":id/activate")

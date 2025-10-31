@@ -1,5 +1,5 @@
 import { IsArray, IsEnum, IsNotEmpty } from "class-validator";
-import { Role } from "../enums/role.enum";
+import { Role } from "../../enums/role.enum";
 import { ApiProperty } from "@nestjs/swagger";
 
 export class UpdateRolesDto {
