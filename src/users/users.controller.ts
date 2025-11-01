@@ -7,17 +7,20 @@ import {
   HttpStatus,
   Param,
   Patch,
+  Query,
   UseGuards,
 } from "@nestjs/common";
-import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
-import { RolesGuard } from "src/auth/guards/roles.guard";
-import { UsersService } from "./users.service";
-import { Roles } from "src/auth/decorators/roles.decorator";
-import { Role } from "src/auth/enums/role.enum";
 import { ApiBearerAuth, ApiOperation, ApiProperty } from "@nestjs/swagger";
 import { CurrentUser } from "src/auth/decorators/current-user.decorator";
-import { UpdateRolesDto } from "src/users/dto/request/update-roles-request.dto";
+import { Roles } from "src/auth/decorators/roles.decorator";
+import { Role } from "src/auth/enums/role.enum";
+import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
+import { RolesGuard } from "src/auth/guards/roles.guard";
 import { ResponseHelper } from "src/common/helpers/response.helper";
+import { UpdateRolesDto } from "src/users/dto/request/update-roles-request.dto";
+import { UsersService } from "./users.service";
+import { UserFilterDto } from "./dto/query/user-filter.dto";
+import { UserDetailDto } from "./dto/response/user-detail.dto";
 
 @Controller("users")
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -30,15 +33,13 @@ export class UsersController {
   @ApiBearerAuth()
   @ApiOperation({ summary: "Get all users (admin only)" })
   @ApiProperty({ description: "Get all users (admin only)" })
-  async getAllUsers() {
-    const [users, count] = await this.usersService.findAll();
-    return {
-      message: "Users retrieved successfully",
-      data: users,
-      metadata: {
-        total: count,
-      },
-    };
+  async getAllUsers(@Query() filterDto: UserFilterDto) {
+    const { page = 1, limit = 10, ...filters } = filterDto;
+    const [data, count] = await this.usersService.findAll(page, limit, filters);
+
+    const users = data.map((user) => new UserDetailDto(user));
+
+    return ResponseHelper.paginated(users, count, page, limit, "Users retrieved successfully");
   }
 
   @Patch(":id/roles")

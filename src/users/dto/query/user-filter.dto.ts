@@ -1,4 +1,4 @@
-import { Type } from "class-transformer";
+import { Transform, Type } from "class-transformer";
 import { IsBoolean, IsEnum, IsOptional } from "class-validator";
 import { Role } from "src/auth/enums/role.enum";
 import { PaginationQueryDto } from "src/common/dto/pagination-query.dto";
@@ -9,18 +9,20 @@ export class UserFilterDto extends PaginationQueryDto {
   role?: Role;
 
   @IsOptional()
-  @Type(() => Boolean)
+  @Transform(({ value }) => {
+    if (value === 'true') return true;
+    if (value === 'false') return false;
+    return value;
+  })
   @IsBoolean()
   isEmailVerified?: boolean;
 
   @IsOptional()
-  @Type(() => Boolean)
+  @Transform(({ value }) => {
+    if (value === 'true') return true;
+    if (value === 'false') return false;
+    return value;
+  })
   @IsBoolean()
   isActive?: boolean;
-
-  @IsOptional()
-  email?: string;
-
-  @IsOptional()
-  name?: string;
 }

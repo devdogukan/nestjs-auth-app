@@ -4,6 +4,8 @@ import * as bcrypt from "bcrypt";
 import { Role } from "src/auth/enums/role.enum";
 import { Repository } from "typeorm";
 import { User } from "./entities/user.entity";
+import { UserFilterDto } from "./dto/query/user-filter.dto";
+import { UserDetailDto } from "./dto/response/user-detail.dto";
 
 @Injectable()
 export class UsersService {
@@ -107,19 +109,53 @@ export class UsersService {
     return this.usersRepository.save(user);
   }
 
-  async findAll(): Promise<[User[], number]> {
-    return this.usersRepository.findAndCount({
-      select: [
-        "id",
-        "email",
-        "name",
-        "roles",
-        "isEmailVerified",
-        "isActive",
-        "createdAt",
-        "updatedAt",
-      ],
-    });
+  async findAll(page: number, limit: number, filters: {
+    role?: Role;
+    isEmailVerified?: boolean;
+    isActive?: boolean;
+    search?: string;
+    sortBy?: string;
+    sortOrder?: "ASC" | "DESC";
+  }): Promise<[User[], number]> {
+
+    const query = this.usersRepository.createQueryBuilder(User.name);
+
+    if (filters.role) {
+      query.andWhere("User.roles LIKE :role", { role: `%${filters.role}%` });
+    }
+
+    if (filters.isEmailVerified !== undefined) {
+      query.andWhere("User.isEmailVerified = :isEmailVerified", { isEmailVerified: filters.isEmailVerified });
+    }
+
+    if (filters.isActive !== undefined) {
+      console.log("isActive filter applied:", filters.isActive);
+      query.andWhere("User.isActive = :isActive", { isActive: filters.isActive });
+    }
+
+    if (filters.search) {
+      query.andWhere("(User.name ILIKE :search OR User.email ILIKE :search)", {
+        search: `%${filters.search}%`,
+      });
+    }
+
+    query
+      .select([
+        "User.id",
+        "User.email",
+        "User.name",
+        "User.roles",
+        "User.isActive",
+        "User.isEmailVerified",
+        "User.createdAt",
+        "User.updatedAt",
+      ])
+      .orderBy(`User.${filters.sortBy || "createdAt"}`, filters.sortOrder || "ASC")
+      .skip((page - 1) * limit)
+      .take(limit);
+
+    const [users, total] = await query.getManyAndCount();
+    return [users, total];
   }
 
   async updateUserRoles(userId: string, roles: Role[]): Promise<User> {

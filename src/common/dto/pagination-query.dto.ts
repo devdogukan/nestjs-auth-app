@@ -1,6 +1,5 @@
 import { Type } from "class-transformer";
 import { IsInt, IsOptional, Max, Min } from "class-validator";
-import type { SortDirection } from "typeorm";
 
 export class PaginationQueryDto {
   @IsOptional()
@@ -23,5 +22,5 @@ export class PaginationQueryDto {
   sortBy?: string = "createdAt";
 
   @IsOptional()
-  sortOrder?: SortDirection = "asc";
+  sortOrder?: "ASC" | "DESC" = "ASC";
 }
