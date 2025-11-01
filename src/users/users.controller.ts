@@ -16,7 +16,7 @@ import { Roles } from "src/auth/decorators/roles.decorator";
 import { Role } from "src/auth/enums/role.enum";
 import { ApiBearerAuth, ApiOperation, ApiProperty } from "@nestjs/swagger";
 import { CurrentUser } from "src/auth/decorators/current-user.decorator";
-import { UpdateRolesDto } from "src/auth/dto/request/update-roles-request.dto";
+import { UpdateRolesDto } from "src/users/dto/request/update-roles-request.dto";
 import { ResponseHelper } from "src/common/helpers/response.helper";
 
 @Controller("users")
