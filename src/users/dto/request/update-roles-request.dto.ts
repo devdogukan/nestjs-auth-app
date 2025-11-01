@@ -2,7 +2,7 @@ import { IsArray, IsEnum, IsNotEmpty } from "class-validator";
 import { Role } from "../../../auth/enums/role.enum";
 import { ApiProperty } from "@nestjs/swagger";
 
-export class UpdateRolesDto {
+export class UpdateRolesRequestDto {
   @ApiProperty({
     description: "Array of user roles",
     example: [Role.USER, Role.MODERATOR, Role.ADMIN, Role.SUPER_ADMIN],

@@ -1,4 +1,4 @@
-import { Transform, Type } from "class-transformer";
+import { Transform } from "class-transformer";
 import { IsBoolean, IsEnum, IsOptional } from "class-validator";
 import { Role } from "src/auth/enums/role.enum";
 import { PaginationQueryDto } from "src/common/dto/pagination-query.dto";

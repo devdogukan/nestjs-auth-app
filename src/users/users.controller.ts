@@ -5,22 +5,29 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  NotFoundException,
   Param,
   Patch,
   Query,
   UseGuards,
 } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiProperty } from "@nestjs/swagger";
+
 import { CurrentUser } from "src/auth/decorators/current-user.decorator";
 import { Roles } from "src/auth/decorators/roles.decorator";
 import { Role } from "src/auth/enums/role.enum";
 import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
 import { RolesGuard } from "src/auth/guards/roles.guard";
 import { ResponseHelper } from "src/common/helpers/response.helper";
-import { UpdateRolesDto } from "src/users/dto/request/update-roles-request.dto";
 import { UsersService } from "./users.service";
-import { UserFilterDto } from "./dto/query/user-filter.dto";
-import { UserDetailDto } from "./dto/response/user-detail.dto";
+
+import {
+  RoleUpdateResponseDto,
+  UpdateRolesRequestDto,
+  UserDetailDto,
+  UserFilterDto,
+} from "src/users/dto";
+
 
 @Controller("users")
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -38,7 +45,6 @@ export class UsersController {
     const [data, count] = await this.usersService.findAll(page, limit, filters);
 
     const users = data.map((user) => new UserDetailDto(user));
-
     return ResponseHelper.paginated(users, count, page, limit, "Users retrieved successfully");
   }
 
@@ -48,9 +54,11 @@ export class UsersController {
   @ApiBearerAuth()
   @ApiOperation({ summary: "Update user roles by ID (admin only)" })
   @ApiProperty({ description: "Update user roles by ID (admin only)" })
-  async updateUserRoles(@Param("id") id: string, @Body() updateRolesDto: UpdateRolesDto) {
+  async updateUserRoles(@Param("id") id: string, @Body() updateRolesDto: UpdateRolesRequestDto) {
     const updatedUser = await this.usersService.updateUserRoles(id, updateRolesDto.roles);
-    return ResponseHelper.success("User roles updated successfully", updatedUser);
+
+    const response = new RoleUpdateResponseDto(updatedUser);
+    return ResponseHelper.success("User roles updated successfully", response);
   }
 
   @Patch(":id/activate")
@@ -61,9 +69,7 @@ export class UsersController {
   @ApiProperty({ description: "Activate user by ID (admin only)" })
   async activateUser(@Param("id") id: string) {
     await this.usersService.activateUser(id);
-    return {
-      message: "User activated successfully",
-    };
+    return ResponseHelper.success("User activated successfully");
   }
 
   @Patch(":id/deactivate")
@@ -74,9 +80,7 @@ export class UsersController {
   @ApiProperty({ description: "Deactivate user by ID (admin only)" })
   async deactivateUser(@Param("id") id: string) {
     await this.usersService.deactivateUser(id);
-    return {
-      message: "User deactivated successfully",
-    };
+    return ResponseHelper.success("User deactivated successfully");
   }
 
   @Delete(":id")
@@ -87,9 +91,7 @@ export class UsersController {
   @ApiProperty({ description: "Delete user by ID (super admin only)" })
   async deleteUser(@Param("id") id: string) {
     await this.usersService.deleteUser(id);
-    return {
-      message: "User deleted successfully",
-    };
+    return ResponseHelper.success("User deleted successfully");
   }
 
   @Get("me")
@@ -99,10 +101,9 @@ export class UsersController {
   @ApiProperty({ description: "Get current user profile" })
   async getCurrentUser(@CurrentUser("userId") userId: string) {
     const user = await this.usersService.findById(userId);
-    return {
-      message: "Current user retrieved successfully",
-      data: user,
-    };
+
+    const userDetail = new UserDetailDto(user);
+    return ResponseHelper.success("User profile retrieved successfully", userDetail);
   }
 
   @Get(":id")
@@ -113,9 +114,8 @@ export class UsersController {
   @ApiProperty({ description: "Get user by ID (admin only)" })
   async getUserById(@Param("id") id: string) {
     const user = await this.usersService.findById(id);
-    return {
-      message: "User retrieved successfully",
-      data: user,
-    };
+    
+    const userDetail = new UserDetailDto(user);
+    return ResponseHelper.success("User retrieved successfully", userDetail);
   }
 }

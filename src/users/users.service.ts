@@ -4,8 +4,6 @@ import * as bcrypt from "bcrypt";
 import { Role } from "src/auth/enums/role.enum";
 import { Repository } from "typeorm";
 import { User } from "./entities/user.entity";
-import { UserFilterDto } from "./dto/query/user-filter.dto";
-import { UserDetailDto } from "./dto/response/user-detail.dto";
 
 @Injectable()
 export class UsersService {
@@ -29,12 +27,20 @@ export class UsersService {
     return this.usersRepository.save(user);
   }
 
-  async findByEmail(email: string): Promise<User | null> {
-    return this.usersRepository.findOne({ where: { email: email.toLowerCase() } });
+  async findByEmail(email: string): Promise<User> {
+    const user = await this.usersRepository.findOne({ where: { email: email.toLowerCase() } });
+    if (!user) {
+      throw new NotFoundException("User not found");
+    }
+    return user;
   }
 
-  async findById(id: string): Promise<User | null> {
-    return this.usersRepository.findOne({ where: { id } });
+  async findById(id: string): Promise<User> {
+    const user = await this.usersRepository.findOne({ where: { id } });
+    if (!user) {
+      throw new NotFoundException("User is not found");
+    }
+    return user;
   }
 
   async updateRefreshToken(userId: string, refreshToken: string | null): Promise<void> {
@@ -109,15 +115,18 @@ export class UsersService {
     return this.usersRepository.save(user);
   }
 
-  async findAll(page: number, limit: number, filters: {
-    role?: Role;
-    isEmailVerified?: boolean;
-    isActive?: boolean;
-    search?: string;
-    sortBy?: string;
-    sortOrder?: "ASC" | "DESC";
-  }): Promise<[User[], number]> {
-
+  async findAll(
+    page: number,
+    limit: number,
+    filters: {
+      role?: Role;
+      isEmailVerified?: boolean;
+      isActive?: boolean;
+      search?: string;
+      sortBy?: string;
+      sortOrder?: "ASC" | "DESC";
+    },
+  ): Promise<[User[], number]> {
     const query = this.usersRepository.createQueryBuilder(User.name);
 
     if (filters.role) {
@@ -125,7 +134,9 @@ export class UsersService {
     }
 
     if (filters.isEmailVerified !== undefined) {
-      query.andWhere("User.isEmailVerified = :isEmailVerified", { isEmailVerified: filters.isEmailVerified });
+      query.andWhere("User.isEmailVerified = :isEmailVerified", {
+        isEmailVerified: filters.isEmailVerified,
+      });
     }
 
     if (filters.isActive !== undefined) {
