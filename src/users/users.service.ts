@@ -10,6 +10,7 @@ export class UsersService {
   constructor(@InjectRepository(User) private readonly usersRepository: Repository<User>) {}
 
   async create(email: string, password: string, name: string): Promise<User> {
+    console.log("Creating user:", email, password, name);
     const existingUser = await this.findByEmail(email);
     if (existingUser) {
       throw new ConflictException("This email is already using");
@@ -27,20 +28,12 @@ export class UsersService {
     return this.usersRepository.save(user);
   }
 
-  async findByEmail(email: string): Promise<User> {
-    const user = await this.usersRepository.findOne({ where: { email: email.toLowerCase() } });
-    if (!user) {
-      throw new NotFoundException("User not found");
-    }
-    return user;
+  async findByEmail(email: string): Promise<User | null> {
+    return await this.usersRepository.findOne({ where: { email: email.toLowerCase() } });
   }
 
-  async findById(id: string): Promise<User> {
-    const user = await this.usersRepository.findOne({ where: { id } });
-    if (!user) {
-      throw new NotFoundException("User is not found");
-    }
-    return user;
+  async findById(id: string): Promise<User | null> {
+    return await this.usersRepository.findOne({ where: { id } });
   }
 
   async updateRefreshToken(userId: string, refreshToken: string | null): Promise<void> {

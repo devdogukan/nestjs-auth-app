@@ -102,8 +102,10 @@ export class UsersController {
   async getCurrentUser(@CurrentUser("userId") userId: string) {
     const user = await this.usersService.findById(userId);
 
-    const userDetail = new UserDetailDto(user);
-    return ResponseHelper.success("User profile retrieved successfully", userDetail);
+    if (!user) {
+      throw new NotFoundException("User not found");
+    }
+    return ResponseHelper.success("User profile retrieved successfully", new UserDetailDto(user));
   }
 
   @Get(":id")
@@ -114,8 +116,9 @@ export class UsersController {
   @ApiProperty({ description: "Get user by ID (admin only)" })
   async getUserById(@Param("id") id: string) {
     const user = await this.usersService.findById(id);
-    
-    const userDetail = new UserDetailDto(user);
-    return ResponseHelper.success("User retrieved successfully", userDetail);
+    if (!user) {
+      throw new NotFoundException("User not found");
+    }
+    return ResponseHelper.success("User retrieved successfully", new UserDetailDto(user));
   }
 }
